@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      canvas {
+        border:1px solid #d3d3d3;
+      }
+    </style>
+  </head>
+
+  <body onload="startGame()">
+    <canvas id="my_canvas"></canvas>
+    <p>We created game area with game piece and multiple obstacle.</p>
+    <p>Use arrows keys to move game piece.</p>
+
+    <script>
+
+      var myGamePiece;
+      // TODO: Update obstacle to array of obstacles.
+      var myObstacles = [];
+      var myScore;
+      var colors = ["salmon", "crimson", "firebrick", "lightcoral", "indianred", "darksalmon", "darkred", "darkcyan", "teal", "lightseagreen", "darkseagreen", "mediumaquamarine", "darkturquoise", "paleturquoise", "aquamarine", "turquoise", "mediumturquoise", "cadetblue", "cadetblue", "cadetblue", "steelblue", "steelblue", "lightsteelblue", "powderblue", "lightblue", "skyblue", "lightskyblue", "deepskyblue"];
+      
+      
+
+      function startGame() {
+        myGamePiece = new component(35, 35, "http://i.imgur.com/DP31ys4.png", 120, 135, 0, "actualimage");
+        myScore = new component(0, 0, "black", 300, 40, 0, "text");
+        myGameArea.start();
+        myBackground = new component(780, 270, "lightblue", 0, 0, 0, "image");
+      }
+
+      var myGameArea = {
+        canvas : document.getElementById("my_canvas"),
+        start : function() {
+          this.canvas.width = 780;
+          this.canvas.height = 270;
+          this.context = this.canvas.getContext("2d");
+
+          // TODO: Add frameNo variable for counting frames.
+          this.frameNo = 0;
+          this.xSpeed =
+          this.interval = setInterval(updateGameArea, 20);
+
+          window.addEventListener('keydown', function (e) {
+              myGameArea.key = e.keyCode;
+          })
+
+          window.addEventListener('keyup', function (e) {
+              myGameArea.key = false;
+          })
+        },
+        clear : function() {
+          this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        },
+        stop : function() {
+          clearInterval(this.interval);
+        }
+      }
+
+      function component(width, height, color, x, y, speedY, type) {
+        //console.log(type);
+        this.type = type;
+        if (type == "actualimage"){
+            this.image = new Image();
+            this.image.src = color;
+        }
+        this.width = width;
+        this.height = height;
+        this.x = x;
+        this.y = y;
+        this.speedX = 0;
+        this.speedY = speedY;
+        this.update = function() {
+          ctx = myGameArea.context;
+          if (type == "actualimage"){
+            ctx.drawImage(this.image,
+            this.x,
+            this.y,
+            this.width,
+            this.height);
+          }else if (type == "text"){
+            //console.log('hi');
+            ctx.fillStyle = color;
+            ctx.fillText("SCORE: " + myGameArea.frameNo, this.x, this.y);
+          }else{
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+          }
+        }
+      }
+
+      // Updated function to check crash with all obstacles by looping over.
+      // Incremented frame no.
+      // Added a new obstacle after every 150 frames interval.
+      // Updated motion for all obctacle.
+      
+      
+      function updateGameArea() {
+        // TODO: Update function to check crash with all obstacles by looping over.
+        for (obs of myObstacles){
+          if (checkCrash(myGamePiece, obs)){
+          alert("haha you lose. your score is " + myGameArea.frameNo);
+          myGameArea.stop();
+          
+          return;
+          }
+        }
+        
+        myGameArea.clear();
+        myBackground.update();
+        // TODO: Increment frameNo.
+        myGameArea.frameNo += 1;
+        if (checkInterval(130)){
+          colorNo = Math.floor(Math.random() * colors.length);
+          myObstacles.push(new component(50, Math.floor(Math.random() * 75) + 20, "https://static.giantbomb.com/uploads/square_small/13/135472/1891820-017pidgeotto.png", myGameArea.canvas.width, Math.floor(Math.random() * (myGameArea.canvas.height - 151)), Math.floor(Math.random() * 4) + 1, "actualimage"));
+        }
+        // TODO: Add a new obstacle after every 150 frames interval.
+        // Use checkInterval method
+        // Create obstacle at end of canvas
+        // (i.e. at position myGameArea.canvas.width, myGameArea.canvas.height - 200)
+
+        // TODO: Update position for all obctacle.
+        for (obs of myObstacles){
+          obs.x += -2;
+          obs.y += obs.speedY;
+          
+          if (obs.y + obs.height >= myGameArea.canvas.height){
+            obs.speedY *= -1;
+          }
+          
+          if (obs.y <= 0){
+            obs.speedY *= -1;
+          }
+          obs.update();
+        }
+        updateSpeed();
+        updatePosition();
+        
+        myGamePiece.update();
+        myScore.update();
+      }
+
+      function updatePosition() {
+        myGamePiece.x += myGamePiece.speedX;
+        myGamePiece.y += myGamePiece.speedY;
+        if (myGamePiece.y > myGameArea.canvas.height - 10){
+          myGameArea.stop();
+          return;
+        }
+        if (myGamePiece.y < 0){
+          myGameArea.stop();
+          return;
+        }
+      }
+
+      function updateSpeed() {
+        myGamePiece.speedX = 0;
+        myGamePiece.speedY = 0;
+        if (myGameArea.key && myGameArea.key == 32) {myGamePiece.speedY = -5; }
+        if (myGameArea.key == false) {myGamePiece.speedY = 5; }
+        //if (myGameArea.key && myGameArea.key == 38) {myGamePiece.speedY = -1; }
+        //if (myGameArea.key && myGameArea.key == 40) {myGamePiece.speedY = 1; }
+      }
+
+      function checkCrash(gamePiece, obstacle) {
+        var gamePieceLeft = gamePiece.x;
+        var gamePieceRight = gamePiece.x + (gamePiece.width);
+        var gamePieceTop = gamePiece.y;
+        var gamePieceBottom = gamePiece.y + (gamePiece.height);
+        var obstacleLeft = obstacle.x;
+        var obstacleRight = obstacle.x + (obstacle.width);
+        var obstacleTop = obstacle.y;
+        var obstacleBottom = obstacle.y + (obstacle.height);
+        if ((gamePieceBottom < obstacleTop) ||
+            (gamePieceTop > obstacleBottom) ||
+            (gamePieceRight < obstacleLeft) ||
+            (gamePieceLeft > obstacleRight)) {
+          return false;
+        }
+        return true;
+      }
+
+      function checkInterval(interval) {
+        // TODO: Check if given interval is passed. Return true if interval match else false.
+        if ((myGameArea.frameNo / interval) % 1 == 0) {
+          return true;
+        }
+        return false;
+        // Hint: interval match if its frameNo is exact multiple.
+
+      }
+    </script>
+  </body>
+</html>
